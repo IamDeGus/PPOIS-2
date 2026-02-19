@@ -1,0 +1,48 @@
+@startuml
+title DefenseProcess - UML State Diagram
+
+hide empty description
+
+[*] --> Preparation
+
+state Preparation
+state Revision
+state Rehearsal
+state Defense
+state Attestation
+state Finished
+
+Preparation --> Preparation : work_thesis / rest / send_review\nchange_day [default]
+Preparation --> Revision : change_day [today in {5,11,16}]
+Preparation --> Attestation : change_day [today == 25]
+
+Revision --> Revision : work_thesis / rest / submit_for_inspection\nchange_day [default]
+Revision --> Preparation : change_day [today in {6,7,12,13} and revision_passed[idx] == true]
+Revision --> Rehearsal : change_day [today in {17,18} and revision_passed[2] == true]
+Revision --> Finished : change_day [today in {7,13,18} and revision_passed[idx] == false]
+Revision --> Attestation : change_day [today == 25]
+
+Rehearsal --> Rehearsal : prepare_slides / rest / rehearse\nchange_day [default]
+Rehearsal --> Defense : change_day [today in {23,24}]
+Rehearsal --> Attestation : change_day [today == 25]
+
+Defense --> Defense : prepare_slides / rest / rehearse\nchange_day [default]
+Defense --> Attestation : defense (sets defense_passed = true)\nchange_day
+Defense --> Attestation : change_day [today == 25]
+
+Attestation --> Finished : attestation / change_day
+Finished --> [*]
+
+note right of Revision
+  idx mapping used in code:
+  - day 6,7 -> idx 0
+  - day 12,13 -> idx 1
+  - day 18 -> idx 2
+end note
+
+note bottom of Defense
+  change_day also forces stage DEFENSE
+  at day 23 or 24 before final checks.
+end note
+
+@enduml

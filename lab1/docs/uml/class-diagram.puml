@@ -1,0 +1,170 @@
+@startuml
+title Diploma Defense Simulator - UML Class Diagram
+
+hide empty members
+skinparam classAttributeIconSize 0
+
+enum DefenseStage {
+  PREPARATION
+  REVISION
+  REHEARSAL
+  DEFENSE
+  ATTESTATION
+  FINISHED
+}
+
+class SessionService {
+  +ACTION_HELP: dict[str, str]
+  --
+  -__saves_dir: Path
+  -__process: DefenseProcess | None
+  -__slot: int | None
+  --
+  +has_save(slot: int): bool
+  +start_new(slot: int, student_name: str, student_intelligence: int, seed: int | None = None): DefenseProcess
+  +load(slot: int): DefenseProcess
+  +save(): Path
+  +get_status(): dict[str, int | str | bool]
+  +get_available_actions(): list[str]
+  +get_action_label(action_code: str): str
+  +get_action_help(action_code: str): str
+  +perform_action(action_code: str): None
+  +is_finished(): bool
+}
+
+class DefenseProcess {
+  +MAX_DAY: int = 25
+  +MAX_GRADE: int = 10
+  +ACTION_LABELS: dict[str, str]
+  --
+  -__student: Student
+  -__diploma_project: DiplomaProject
+  -__presentation: Presentation
+  -__scientific_supervisor: ScientificSupervisor
+  -__commission: Commission
+  -__today: int
+  -__stage: DefenseStage
+  -__seed: int | None
+  -__revision_passed: list[bool]
+  -__defense_passed: bool
+  -__final_grade: int
+  -__score: int
+  --
+  +get_action_label(action_code: str): str
+  +get_available_actions(): list[str]
+  +is_finished(): bool
+  +get_status(): dict[str, int | str | bool]
+  +perform_action(action_code: str): None
+  +change_day(): None
+  +to_dict(): dict[str, object]
+  +from_dict(data: dict[str, object]): DefenseProcess
+  --
+  -_work_on_thesis(): None
+  -_prepare_slides(): None
+  -_rest(): None
+  -_send_to_review(): None
+  -_submit_for_inspection(): None
+  -_rehearse_defense(): None
+  -_start_defense(): None
+  -_perform_attestation(): None
+}
+
+class Student {
+  +MIN_STAMINA: int = 0
+  +MAX_STAMINA: int = 100
+  +MAX_ANSWER_SKILL: int = 3
+  +ALLOWED_INTELLIGENCE: tuple[int, int, int]
+  --
+  -__name: str
+  -__intelligence: int
+  -__stamina: int
+  -__answer_skill: int
+  --
+  +get_name(): str
+  +get_intelligence(): int
+  +get_str_intelligence(): str
+  +get_stamina(): int
+  +get_answer_skill(): int
+  +change_stamina(delta: int): int
+  +change_answer_skill(delta: int): int
+}
+
+class DiplomaProject {
+  +MIN_PCT: int = 0
+  +MAX_PCT: int = 100
+  +MIN_QUALITY: int = 0
+  +MAX_QUALITY: int = 100
+  --
+  -__pct_complition: int
+  -__quality: int
+  -__theme: Theme
+  --
+  +get_pct_complition(): int
+  +get_quality(): int
+  +get_theme_name(): str
+  +get_theme_complexity(): int
+  +change_complition(delta: int): int
+  +change_quality(delta: int): int
+}
+
+class Presentation {
+  +MIN_PCT: int = 0
+  +MAX_PCT: int = 100
+  --
+  -__pct_complition: int
+  --
+  +get_pct_complition(): int
+  +change_complition(delta: int): int
+}
+
+class ScientificSupervisor {
+  +ALLOWED_INTELLIGENCE: tuple[int, int, int]
+  +ALLOWED_LOYALTY: tuple[int, int, int]
+  --
+  -__name: str
+  -__intelligence: int
+  -__loyalty: int
+  --
+  +get_name()
+  +get_intelligence()
+  +get_loyalty()
+}
+
+class Commission {
+  +ALLOWED_LOYALTY: tuple[int, int, int]
+  --
+  -__loyalty: int
+  --
+  +get_loyalty()
+}
+
+class Theme {
+  +ALLOWED_COMLEXITY: tuple[int, int, int]
+  --
+  -__name: str
+  -__complexity: int
+  --
+  +get_name(): str
+  +get_complexity(): int
+}
+
+SessionService o-- "0..1" DefenseProcess : manages
+DefenseProcess --> DefenseStage : current stage
+
+DefenseProcess *-- Student
+DefenseProcess *-- DiplomaProject
+DefenseProcess *-- Presentation
+DefenseProcess *-- ScientificSupervisor
+DefenseProcess *-- Commission
+
+DiplomaProject *-- Theme
+
+SessionService ..> Student : creates
+SessionService ..> DiplomaProject : creates
+SessionService ..> Presentation : creates
+SessionService ..> ScientificSupervisor : creates
+SessionService ..> Commission : creates
+SessionService ..> Theme : creates
+SessionService ..> DefenseProcess : loads/saves
+
+@enduml
