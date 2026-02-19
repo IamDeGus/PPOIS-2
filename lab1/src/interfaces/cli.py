@@ -1,13 +1,13 @@
 from application import SessionService
 
-from rich.console import Console
-from rich.live import Live
-from rich.layout import Layout
+from rich.console import Console, Group
+from rich.columns import Columns
 from rich.panel import Panel
-from rich.table import Table
 from rich.progress_bar import ProgressBar
 from rich.align import Align
-import time
+from rich.table import Table
+from rich.text import Text
+from rich.markdown import Markdown
 
 def run_cli(
     service: SessionService,
@@ -32,21 +32,26 @@ def run_cli(
 
 
     console = Console()
-    table_1 = Table(show_footer=False)
-    column_text = 'Day:   Stage:  '
-    column = Panel(column_text)
-    # table_3
-    # table_4
-    # print(column)
-    table_centered = Align.center(table_1)
+    console.print(render_ui(service))
     
-    with Live(Panel(column_text), console=console, screen=False, refresh_per_second=20) as live:
-        column_text = 'opaopaopaopa'
-        time.sleep(5)
-        live.update(Panel(column_text))
+    while True:
+        console.clear()
+        console.print(render_ui(service))
 
-    time.sleep(5)
+        if service.is_finished():
+            console.print(render_final_report(service))
+            print("\nSession is finished.")
+            break
 
+        action_code = _choose_action(service, console)
+        if action_code == "exit":
+            save_path = service.save()
+            print(f"\nSession saved to {save_path}.")
+            break
+
+        service.perform_action(action_code)
+        
+        
     
         
 
@@ -75,83 +80,314 @@ def run_cli(
     #     # if result.stage_changed and not result.finished:
     #     #     print("Stage changed.")
 
-def render_ui(status: dict[str, int | str | bool]) -> La:
+def render_ui(service: SessionService) -> Group:
+    status = service.get_status()
+    
+    # # ----- HEADER -----
+    # header_text = f"Day: {status['today']}/{status['max_days']}     Stage: {status['stage']}"
+    # header_panel = Panel(header_text,  style="bold cyan", width=53)
 
-    layout = Layout()
-
-    layout.split_column(
-        Layout(name="header", size=3),
-        Layout(name="main", ratio=3),
-        Layout(name="timeline", size=3),
-        Layout(name="actions", size=6),
-        Layout(name="input", size=3),
+    # ----- Student -----
+    student_table = Table.grid(expand=True)
+    student_table.add_column(no_wrap=True)
+    student_table.add_column(ratio=1)
+    student_table.add_row()
+    student_table.add_row(
+        "Name: ", 
+        Text(f' {str(status["student_name"])}', style='bold black on white'),
+        " ",
+        "         "
     )
-
-    # ----- HEADER -----
-    header_text = f"Day: {status['today']}/{status['max_days']}     Stage: {status['stage']}"
-    layout["header"].update(Panel(header_text, style="bold cyan"))
-
-    # ----- MAIN COLUMNS -----
-    main_table = Table.grid(expand=True)
-    main_table.add_column()
-    main_table.add_column()
-
-    student_panel = Panel(
-        f"""
-Name: {status['student_name']}
-Intelligence: {status['student_intelligence']}
-
-Стамина:
-{ProgressBar(total=100, completed=state.stamina)}
-
-Answer skill:
-{ProgressBar(total=100, completed=state.answer_skill)}
-        """,
-        title="Student",
+    student_table.add_row()
+    student_table.add_row(
+        "Intelligence: ",
+        ProgressBar(
+            total=3,
+            completed=int(status["student_intelligence"]), 
+            width=24,
+            complete_style="yellow",
+            finished_style="yellow",
+        ),
+        " ",
+        Text(
+            f" {status['student_intelligence']}/3 ", 
+            style=f"bold black on yellow"
+        )
     )
-
-    project_panel = Panel(
-        f"""
-Тема: ИИ для анализа данных
-
-Тезис:
-{ProgressBar(total=100, completed=state.thesis)}
-
-Качество:
-{ProgressBar(total=100, completed=state.quality)}
-
-Презентация:
-{ProgressBar(total=100, completed=state.presentation)}
-""",
-        title="Дипломный проект",
+    student_table.add_row(
+        "Stamina: ",
+        ProgressBar(
+            total=100, 
+            completed=int(status["stamina"]), 
+            width=24,
+            complete_style="red",
+            finished_style="green",
+        ),
+        " ",
+        Text(
+            f" {status['stamina']}/100 ", 
+            style=f"bold black on {'red' if status['stamina'] != 100 else 'green'}"
+        )
     )
+    student_table.add_row(
+        "Answer skill: ",
+        ProgressBar(
+            total=3, 
+            completed=int(status["answer_skill"]), 
+            width=24,
+            complete_style="red",
+            finished_style="green",
+        ),
+        " ",
+        Text(
+            f" {status['answer_skill']}/3 ", 
+            style=f"bold black on {'red' if status['answer_skill'] != 3 else 'green'}"
+        )
+    )
+    student_table.add_row()
+    student_panel = Panel(student_table, title="Student")
 
-    main_table.add_row(student_panel, project_panel)
 
-    layout["main"].update(main_table)
+    # ----- Diplom Project -----
+    project_table = Table.grid(expand=True)
+    project_table.add_column(no_wrap=True)
+    project_table.add_column(ratio=1)
+    project_table.add_row()
+    project_table.add_row(
+        "Theme: ", 
+        Text(f' {str(status["theme_name"])}', style='bold black on white'),
+        " ",
+        "         "
+    )
+    project_table.add_row()
+    project_table.add_row(
+        "Thesis done: ",
+        ProgressBar(
+            total=100, 
+            completed=int(status["thesis_completion"]), 
+            width=31,
+            complete_style="red",
+            finished_style="green",
+        ),
+        " ",
+        Text(
+            f" {status['thesis_completion']}/100 ", 
+            style=f"bold black on {'red' if status['thesis_completion'] != 100 else 'green'}"
+        )
+    )
+    project_table.add_row(
+        "Quality: ",
+        ProgressBar(
+            total=100, 
+            completed=int(status["thesis_quality"]), 
+            width=31,
+            complete_style="red",
+            finished_style="green",
+        ),
+        " ",
+        Text(
+            f" {status['thesis_quality']}/100 ", 
+            style=f"bold black on {'red' if status['thesis_quality'] != 100 else 'green'}"
+        )
+    )
+    project_table.add_row(
+        "Presentation: ",
+        ProgressBar(
+            total=100, 
+            completed=int(status["presentation"]), 
+            width=31,
+            complete_style="red",
+            finished_style="green",
+        ),
+        " ",
+        Text(
+            f" {status['presentation']}/100 ", 
+            style=f"bold black on {'red' if status['presentation'] != 100 else 'green'}"
+        )
+    )
+    project_table.add_row()
+    project_panel = Panel(project_table, title="Thesis")
+
+    main_columns = Columns([student_panel, project_panel], equal=True)
 
     # ----- TIMELINE -----
-    timeline_bar = ProgressBar(total=25, completed=state.day)
-    layout["timeline"].update(
-        Panel(Align.center(timeline_bar), title="Временная линия")
+    timeline_table = Table.grid(expand=True)
+    timeline_table.add_column(no_wrap=True)
+    timeline_table.add_column(ratio=1)
+    timeline_table.add_row(
+        Columns(
+            [
+                ProgressBar(
+                    total=2.5, 
+                    completed=status['today'], 
+                    width=6,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󰷈", style=f"{'green' if status['today'] > 2.5  else 'grey23'}"),
+                ProgressBar(
+                    total=2.5, 
+                    completed=status['today'] - 2.5, 
+                    width=6,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+                
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 5, 
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󰃯", style=f"{'green' if status['today'] > 6  else 'grey23'}"),
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 6, 
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+                
+                ProgressBar(
+                    total=2, 
+                    completed=status['today'] - 7, 
+                    width=5,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󰷈", style=f"{'green' if status['today'] > 9  else 'grey23'}"),
+                ProgressBar(
+                    total=2, 
+                    completed=status['today'] - 9, 
+                    width=5,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 11,
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󰃯", style=f"{'green' if status['today'] > 12  else 'grey23'}"),
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 12, 
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+
+                ProgressBar(
+                    total=1.5, 
+                    completed=status['today'] - 13,
+                    width=4,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󰷈", style=f"{'green' if status['today'] > 14.5  else 'grey23'}"),
+                ProgressBar(
+                    total=1.5, 
+                    completed=status['today'] - 14.5, 
+                    width=4,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 16,
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󰃯", style=f"{'green' if status['today'] > 17  else 'grey23'}"),
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 17,
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+
+                ProgressBar(
+                    total=2.5, 
+                    completed=status['today'] - 18,
+                    width=6,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󱆿", style=f"{'green' if status['today'] > 20.5  else 'grey23'}"),
+                ProgressBar(
+                    total=2.5, 
+                    completed=status['today'] - 20.5, 
+                    width=6,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 23,
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text("󰞀", style=f"{'green' if status['today'] > 24  else 'grey23'}"),
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 24, 
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+                Text(">"),
+
+                ProgressBar(
+                    total=1, 
+                    completed=status['today'] - 24,
+                    width=2,
+                    complete_style="green",
+                    finished_style="green",
+                ),
+            ]
+        )
     )
+    
+    timeline_panel = Panel(timeline_table, width=112)
 
     # ----- ACTIONS -----
-    actions = Panel(
-        "1) Учиться\n"
-        "2) Писать тезис\n"
-        "3) Отдыхать\n",
-        title="Действия",
-    )
+    actions = service.get_available_actions()
+    
+    action_tables = Table.grid(expand=True)
+    action_tables.add_column(no_wrap=True)
+    action_tables.add_column(ratio=1)
+    action_tables.add_row()
+    
+    for idx, action_code in enumerate(actions, start=1):
+        action_tables.add_row(
+            Text(f"{idx}. "),
+            Text(f"{service.get_action_label(action_code)}"),
+            Text(service.get_action_help(action_code), style="italic")
+        )
+    
+    action_tables.add_row(Text("0. "), Text("Exit and save   "))
+    action_tables.add_row()
 
-    layout["actions"].update(actions)
+    
+    actions_panel = Panel(action_tables, title="Actions", width=60)
 
-    # ----- INPUT PLACE -----
-    layout["input"].update(
-        Panel("Введите команду...", title="Команда")
-    )
-
-    return layout
+    return Group(main_columns, timeline_panel, actions_panel)
 
 
 def _prompt_int(prompt: str, min_value: int, max_value: int) -> int:
@@ -169,39 +405,39 @@ def _prompt_int(prompt: str, min_value: int, max_value: int) -> int:
         print(f"Value must be between {min_value} and {max_value}.")
 
 
-def _print_status(status: dict[str, int | str | bool]) -> None:
-    print("\n" + "=" * 62)
-    print(
-        f"Day {status['today']}/{status['max_days']} | Stage: {status['stage']} | "
-        f"Student: {status['student_name']}"
-    )
-    print(
-        "Thesis: "
-        f"{status['thesis_completion']}% done, "
-        f"quality {status['thesis_quality']} | "
-        f"Presentation: {status['presentation']}%"
-    )
-    print(
-        f"Stamina: {status['stamina']} | "
-        f"Answer skill: {status['answer_skill']} | "
-        # f"Passed inspections: {status['revision_passed_count']}/3"
-    )
-    print(
-        f"Theme: {status['theme_name']} (complexity {status['theme_complexity']}) | "
-        f"Defense passed: {status['defense_passed']}"
-    )
-    print(f"Score: {status['score']}")
-    print("=" * 62)
+# def _print_status(status: dict[str, int | str | bool]) -> None:
+#     print("\n" + "=" * 62)
+#     print(
+#         f"Day {status['today']}/{status['max_days']} | Stage: {status['stage']} | "
+#         f"Student: {status['student_name']}"
+#     )
+#     print(
+#         "Thesis: "
+#         f"{status['thesis_completion']}% done, "
+#         f"quality {status['thesis_quality']} | "
+#         f"Presentation: {status['presentation']}%"
+#     )
+#     print(
+#         f"Stamina: {status['stamina']} | "
+#         f"Answer skill: {status['answer_skill']} | "
+#         # f"Passed inspections: {status['revision_passed_count']}/3"
+#     )
+#     print(
+#         f"Theme: {status['theme_name']} (complexity {status['theme_complexity']}) | "
+#         f"Defense passed: {status['defense_passed']}"
+#     )
+#     print(f"Score: {status['score']}")
+#     print("=" * 62)
 
 
-def _choose_action(service: SessionService) -> str:
+def _choose_action(service: SessionService, console: Console) -> str:
     actions = service.get_available_actions()
-    for idx, action_code in enumerate(actions, start=1):
-        print(f"{idx}. {service.get_action_label(action_code)}")
-    print("0. Exit and save")
-
+    status = service.get_status()
+    #     header_text = f"Day: {status['today']}/{status['max_days']}     Stage: {status['stage']}"
+    # header_panel = Panel(header_text,  style="bold cyan", width=53)
+    root_str = f"({status['today']}/{status['max_days']}), {status['stage']}"
     while True:
-        raw = input("> ").strip()
+        raw = console.input(f"[[italic]{root_str}[/]][bold]> [/]").strip()
         if raw == "0":
             return "exit"
         try:
@@ -215,11 +451,35 @@ def _choose_action(service: SessionService) -> str:
         print("No such option. Try again.")
 
 
-def _print_final_report(service: SessionService) -> None:
+def render_final_report(service: SessionService) -> Group:
     report = service.get_status()
 
-    print("-" * 62)
-    print(f"Final grade (10): {report['final_grade']}")
-    print(f"Total score: {report['score']}")
-    print(f"Finished on day: {report['today']}")
-    print("-" * 62)
+    stata_table = Table.grid(expand=True)
+    stata_table.add_column(no_wrap=True)
+    stata_table.add_column(ratio=1)
+    stata_table.add_row()
+    
+    if report['defense_passed']:
+        stata_table.add_row(
+            Text('Final grade:  ', style='bold'),
+            Text(f'{report['final_grade']}', style='cyan italic') 
+        )
+    else:
+        stata_table.add_row(
+            Text('Final grade:  ', style='bold'),
+            Text('LOSE', style='cyan italic')
+        )
+        
+    stata_table.add_row(
+        Text('Total score:  ', style='bold'),
+        Text(f'{report['score']}', style='cyan italic')
+    )
+    stata_table.add_row(
+        Text('Finished on day:  ', style='bold'),
+        Text(f'{report['today']}', style='cyan italic')
+    )
+    stata_table.add_row()
+
+    stata_panel = Panel(stata_table, width=30)
+
+    return Group(stata_panel)

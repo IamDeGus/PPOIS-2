@@ -15,6 +15,17 @@ from domain import (
 )
 
 class SessionService:
+    ACTION_HELP: dict[str, str] = {
+        "work_thesis": "thesis ,  stamina ",
+        "rest": "stamina ",
+        "send_review": "quality ,  stamina ",
+        "submit_for_inspection": "stamina ",
+        "prepare_slides": "presentation ,  stamina ",
+        "rehearse": "answer skill ,  stamina ",
+        "defense": "stamina ",
+        "attestation": "",
+    }
+    
     def __init__(self, saves_dir: str | Path):
         self.__saves_dir = Path(saves_dir)
         self.__process: DefenseProcess | None = None
@@ -111,6 +122,10 @@ class SessionService:
 
     def get_action_label(self, action_code: str) -> str:
         return self._require_process().get_action_label(action_code)
+
+    def get_action_help(self, action_code: str) -> str:
+        return self.ACTION_HELP[action_code]
+        
 
     def perform_action(self, action_code: str) -> None:
         process = self._require_process()

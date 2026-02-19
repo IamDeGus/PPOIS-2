@@ -88,7 +88,7 @@ class DefenseProcess:
             'max_days': self.__class__.MAX_DAY,
             'stage': self.__stage.value,
             'student_name': self.__student.get_name(),
-            'student_intelligence': self.__student.get_str_intelligence(),
+            'student_intelligence': self.__student.get_intelligence(),
             'stamina': self.__student.get_stamina(),
             'thesis_completion': self.__diploma_project.get_pct_complition(),
             'thesis_quality': self.__diploma_project.get_quality(),
