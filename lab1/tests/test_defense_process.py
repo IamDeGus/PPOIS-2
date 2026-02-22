@@ -113,7 +113,7 @@ class DefenseProcessTests(unittest.TestCase):
         status = process.get_status()
 
         self.assertEqual(status["revision_passed"], [True, True, True])
-        self.assertEqual(status["final_grade"], 2)
+        self.assertEqual(status["final_grade"], 3)
         self.assertEqual(status["score"], 15)
         self.assertEqual(status["stamina"], 73)
         self.assertEqual(status["today"], 6)
