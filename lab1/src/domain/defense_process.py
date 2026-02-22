@@ -190,15 +190,15 @@ class DefenseProcess:
         pct: int = self.__diploma_project.get_pct_complition()
         if (pct > 33 and self.__revision_passed[0] == False):
             self.__revision_passed[0] = True
-            self.__final_grade += 1 - self.__today // 5
+            self.__final_grade += 1 - self.__today // 6
             self.__score += 2
         if (pct > 66 and self.__revision_passed[1] == False):
             self.__revision_passed[1] = True
-            self.__final_grade += 1 - self.__today // 9
+            self.__final_grade += 1 - self.__today // 12
             self.__score += 5
         if (pct == 100 and self.__revision_passed[2] == False):
             self.__revision_passed[2] = True
-            self.__final_grade += 1 - self.__today // 12
+            self.__final_grade += 1 - self.__today // 17
             self.__score += 8
         
         self.__student.change_stamina(-7)
@@ -228,7 +228,7 @@ class DefenseProcess:
         self.__final_grade += (self.__diploma_project.get_quality() - 70) // 9
         
         self.__score += self.__final_grade * 2
-        self.__score *= self.__student.get_intelligence()
+        self.__score *= (4 - self.__student.get_intelligence())
         self.change_day()
 
 

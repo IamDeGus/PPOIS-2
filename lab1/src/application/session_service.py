@@ -136,9 +136,6 @@ class SessionService:
     def is_finished(self) -> bool:
         return self._require_process().is_finished()
 
-    # def get_final_report(self) -> dict[str, int] | None:
-    #     return self._require_process().get_final_report()
-
     def _slot_path(self, slot: int) -> Path:
         return self.__saves_dir / f"slot_{slot}.json"
 

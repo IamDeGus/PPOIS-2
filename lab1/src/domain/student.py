@@ -48,13 +48,6 @@ class Student:
     def get_answer_skill(self) -> int:
         return self.__answer_skill
 
-    # def get_stats(self) -> dict[str, int | str]:
-    #     return {
-    #         "name": self.__name,
-    #         "intelligence": self.__intelligence,
-    #         "stamina": self.__stamina,
-    #     }
-
     def change_stamina(self, delta: int) -> int:
         new_stamina = self.__stamina + delta
         self.__stamina = max(self.MIN_STAMINA, min(

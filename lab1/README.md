@@ -3,6 +3,7 @@
 ![Demo](./images/demo.gif)
 
 ---
+
 ### Содержание
 
 - [ЛАБА 1. Модель подготовки к защите дипломного проекта](#лаба-1-модель-подготовки-к-защите-дипломного-проекта)
@@ -20,7 +21,7 @@
       - [Стандартный запуск приложения](#стандартный-запуск-приложения)
       - [Полезные параметры](#полезные-параметры)
   - [Тесты](#тесты)
-    - [Покрытие тестами](#покрытие-тестами)
+    - [Покрытие](#покрытие)
   - [UML Диаграммы](#uml-диаграммы)
 
 ---
@@ -117,7 +118,7 @@ cd lab1
 uv run python -m unittest discover -s tests -v
 ```
 
-### Покрытие тестами
+### Покрытие
 
 Установка dev-зависимостей (если еще не установлены):
 ```bash
@@ -127,8 +128,8 @@ uv sync --group dev
 
 Запуск тестов с coverage:
 ```bash
-uv run coverage run --source=src --branch -m unittest discover -s tests -v
-uv run coverage report -m
+uv run coverage run --source=src --branch --omit="src/interfaces/*" -m unittest discover -s tests -v
+uv run coverage report -m --omit="src/interfaces/*"
 ```
 
 ![](./images/image_1.png)

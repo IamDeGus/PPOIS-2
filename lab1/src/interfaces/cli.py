@@ -51,41 +51,9 @@ def run_cli(
 
         service.perform_action(action_code)
         
-        
-    
-        
-
-    # while True:
-    #     console = Console()
-    #     table = Table(show_footer=False)
-    #     table_centered = Align.center(table)
-        
-        
-    #     _print_status(service.get_status())
-
-    #     if service.is_finished():
-    #         print("\nSession is finished.")
-    #         _print_final_report(service)
-    #         break
-
-    #     action_code = _choose_action(service)
-    #     if action_code == "exit":
-    #         save_path = service.save()
-    #         print(f"\nSession saved to {save_path}.")
-    #         break
-
-    #     result = service.perform_action(action_code)
-    #     # print(f"\n[Result] {result.message}")
-
-    #     # if result.stage_changed and not result.finished:
-    #     #     print("Stage changed.")
 
 def render_ui(service: SessionService) -> Group:
     status = service.get_status()
-    
-    # # ----- HEADER -----
-    # header_text = f"Day: {status['today']}/{status['max_days']}     Stage: {status['stage']}"
-    # header_panel = Panel(header_text,  style="bold cyan", width=53)
 
     # ----- Student -----
     student_table = Table.grid(expand=True)
@@ -405,36 +373,10 @@ def _prompt_int(prompt: str, min_value: int, max_value: int) -> int:
         print(f"Value must be between {min_value} and {max_value}.")
 
 
-# def _print_status(status: dict[str, int | str | bool]) -> None:
-#     print("\n" + "=" * 62)
-#     print(
-#         f"Day {status['today']}/{status['max_days']} | Stage: {status['stage']} | "
-#         f"Student: {status['student_name']}"
-#     )
-#     print(
-#         "Thesis: "
-#         f"{status['thesis_completion']}% done, "
-#         f"quality {status['thesis_quality']} | "
-#         f"Presentation: {status['presentation']}%"
-#     )
-#     print(
-#         f"Stamina: {status['stamina']} | "
-#         f"Answer skill: {status['answer_skill']} | "
-#         # f"Passed inspections: {status['revision_passed_count']}/3"
-#     )
-#     print(
-#         f"Theme: {status['theme_name']} (complexity {status['theme_complexity']}) | "
-#         f"Defense passed: {status['defense_passed']}"
-#     )
-#     print(f"Score: {status['score']}")
-#     print("=" * 62)
-
-
 def _choose_action(service: SessionService, console: Console) -> str:
     actions = service.get_available_actions()
     status = service.get_status()
-    #     header_text = f"Day: {status['today']}/{status['max_days']}     Stage: {status['stage']}"
-    # header_panel = Panel(header_text,  style="bold cyan", width=53)
+    
     root_str = f"({status['today']}/{status['max_days']}), {status['stage']}"
     while True:
         raw = console.input(f"[[italic]{root_str}[/]][bold]> [/]").strip()
